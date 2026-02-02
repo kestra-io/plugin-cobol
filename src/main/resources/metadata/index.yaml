@@ -1,12 +1,8 @@
 group: io.kestra.plugin.cobol
 name: "cobol"
 title: "IBM i / AS400 COBOL"
-description: "Run and submit IBM i COBOL programs and jobs"
-body: |
-  Native IBM i (AS/400) COBOL support for Kestra.
-
-  This plugin complements the JDBC AS400 plugin by focusing on
-  COBOL program execution and batch job orchestration.
+description: "Tasks that run, submit and create IBM i COBOL programs and jobs"
+body: ""
 videos: []
 createdBy: "Kestra Core Team"
 managedBy: "Kestra Core Team"
