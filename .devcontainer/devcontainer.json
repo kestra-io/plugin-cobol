@@ -1,10 +1,10 @@
 {
-  "name": "plugin-template",
+  "name": "plugin-cobol",
   "build": {
     "context": ".",
     "dockerfile": "Dockerfile"
   },
-  "workspaceFolder": "/workspaces/plugin-template",
+  "workspaceFolder": "/workspaces/plugin-cobol",
   "forwardPorts": [8080],
   "customizations": {
     "vscode": {
