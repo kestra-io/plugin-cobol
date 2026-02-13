@@ -49,6 +49,9 @@ dependencies {
     annotationProcessor group: "io.kestra", name: "processor", version: kestraVersion
     compileOnly group: "io.kestra", name: "core", version: kestraVersion
     compileOnly group: "io.kestra", name: "script", version: kestraVersion
+
+    // JTOpen (IBM Toolbox for Java)
+    implementation 'net.sf.jt400:jt400:21.0.3'
 }
 
 
