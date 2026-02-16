@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @SuperBuilder
@@ -49,6 +50,7 @@ import java.util.stream.Collectors;
     }
 )
 public class SubmitJob extends AbstractAs400Connection implements RunnableTask<SubmitJob.Output> {
+    private static final Pattern JOB_IDENTITY_PATTERN = Pattern.compile("\\b(\\d{6})/([A-Za-z0-9_$#@]+)/([A-Za-z0-9_$#@]+)\\b");
 
     @Schema(
         title = "IBM i library.",
@@ -137,11 +139,10 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
             // Extract messages
             List<MessageOutput> messages = extractMessages(cmd.getMessageList());
 
-            // Extract job info from the server job
-            Job serverJob = cmd.getServerJob();
-            String resJobName = serverJob != null ? serverJob.getName() : null;
-            String resJobNumber = serverJob != null ? serverJob.getNumber() : null;
-            String resJobUser = serverJob != null ? serverJob.getUser() : null;
+            var submittedJob = extractSubmittedJob(messages);
+            var resJobName = submittedJob != null ? submittedJob.name() : rJobName;
+            var resJobNumber = submittedJob != null ? submittedJob.number() : null;
+            var resJobUser = submittedJob != null ? submittedJob.user() : rUserProfile;
 
             if (!success) {
                 String errorDetail = messages.stream()
@@ -151,7 +152,11 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
                 throw new IllegalStateException("SBMJOB failed: " + errorDetail);
             }
 
-            logger.info("Job submitted successfully: {}/{}/{}", resJobNumber, resJobUser, resJobName);
+            if (submittedJob != null) {
+                logger.info("Job submitted successfully: {}/{}/{}", resJobNumber, resJobUser, resJobName);
+            } else {
+                logger.info("Job submitted successfully, but submitted job identity was not returned by IBM i messages");
+            }
 
             return Output.builder()
                 .messages(messages)
@@ -162,6 +167,37 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
         } finally {
             system.disconnectAllServices();
         }
+    }
+
+    private SubmittedJob extractSubmittedJob(List<MessageOutput> messages) {
+        var submittedFromKnownMessage = findSubmittedJob(messages, true);
+        if (submittedFromKnownMessage != null) {
+            return submittedFromKnownMessage;
+        }
+
+        return findSubmittedJob(messages, false);
+    }
+
+    private SubmittedJob findSubmittedJob(List<MessageOutput> messages, boolean onlyKnownSubmittedMessageId) {
+        for (var message : messages) {
+            if (message.getText() == null) {
+                continue;
+            }
+
+            if (onlyKnownSubmittedMessageId && !"CPC1221".equals(message.getId())) {
+                continue;
+            }
+
+            var matcher = JOB_IDENTITY_PATTERN.matcher(message.getText());
+            if (matcher.find()) {
+                return new SubmittedJob(matcher.group(1), matcher.group(2), matcher.group(3));
+            }
+        }
+
+        return null;
+    }
+
+    private record SubmittedJob(String number, String user, String name) {
     }
 
     @Builder
