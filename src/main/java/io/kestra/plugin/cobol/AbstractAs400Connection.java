@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +27,8 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 public abstract class AbstractAs400Connection extends Task implements As400ConnectionInterface {
+    private static final Pattern SIMPLE_OBJECT_NAME_PATTERN = Pattern.compile("^[A-Za-z0-9_$#@*]+$");
+    private static final Pattern QUALIFIED_OBJECT_NAME_PATTERN = Pattern.compile("^[A-Za-z0-9_$#@*]+(/[A-Za-z0-9_$#@*]+)?$");
 
     @Schema(
         title = "IBM i hostname.",
@@ -82,5 +85,34 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
                 .build());
         }
         return messages;
+    }
+
+    protected String requireSimpleObjectName(String value, String fieldName) {
+        var normalized = value == null ? null : value.trim();
+        if (normalized == null || normalized.isEmpty()) {
+            throw new IllegalArgumentException("Property '" + fieldName + "' must not be blank.");
+        }
+        if (!SIMPLE_OBJECT_NAME_PATTERN.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("Property '" + fieldName + "' contains unsupported characters for IBM i object names.");
+        }
+        return normalized;
+    }
+
+    protected String requireQualifiedObjectName(String value, String fieldName) {
+        var normalized = value == null ? null : value.trim();
+        if (normalized == null || normalized.isEmpty()) {
+            throw new IllegalArgumentException("Property '" + fieldName + "' must not be blank.");
+        }
+        if (!QUALIFIED_OBJECT_NAME_PATTERN.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("Property '" + fieldName + "' contains unsupported characters for qualified IBM i object names.");
+        }
+        return normalized;
+    }
+
+    protected String escapeClStringLiteral(String value) {
+        if (value == null) {
+            throw new IllegalArgumentException("Program parameters must not contain null values.");
+        }
+        return value.replace("'", "''");
     }
 }

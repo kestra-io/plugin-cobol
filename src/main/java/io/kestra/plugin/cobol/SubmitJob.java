@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -95,40 +96,37 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
-        String rLibrary = runContext.render(this.library).as(String.class).orElseThrow();
-        String rProgram = runContext.render(this.program).as(String.class).orElseThrow();
-        List<String> rParams = runContext.render(this.parameters).asList(String.class);
+        var rLibrary = requireSimpleObjectName(runContext.render(this.library).as(String.class).orElseThrow(), "library");
+        var rProgram = requireSimpleObjectName(runContext.render(this.program).as(String.class).orElseThrow(), "program");
+        var rParams = runContext.render(this.parameters).asList(String.class);
 
         // Build the CALL PGM command with PARM if needed
-        StringBuilder callCmd = new StringBuilder();
+        var callCmd = new StringBuilder();
         callCmd.append("CALL PGM(").append(rLibrary).append("/").append(rProgram).append(")");
         if (!rParams.isEmpty()) {
-            String parmList = rParams.stream()
-                .map(p -> "'" + p + "'")
-                .collect(Collectors.joining(" "));
-            callCmd.append(" PARM(").append(parmList).append(")");
+            callCmd.append(" PARM(").append(formatParameters(rParams)).append(")");
         }
 
         // Build the SBMJOB command
-        StringBuilder sbmCmd = new StringBuilder();
+        var sbmCmd = new StringBuilder();
         sbmCmd.append("SBMJOB CMD(").append(callCmd).append(")");
 
-        String rJobName = runContext.render(this.jobName).as(String.class).orElse(null);
+        var rJobName = runContext.render(this.jobName).as(String.class).orElse(null);
         if (rJobName != null) {
-            sbmCmd.append(" JOB(").append(rJobName).append(")");
+            sbmCmd.append(" JOB(").append(requireSimpleObjectName(rJobName, "jobName")).append(")");
         }
 
-        String rJobQueue = runContext.render(this.jobQueue).as(String.class).orElse(null);
+        var rJobQueue = runContext.render(this.jobQueue).as(String.class).orElse(null);
         if (rJobQueue != null) {
-            sbmCmd.append(" JOBQ(").append(rJobQueue).append(")");
+            sbmCmd.append(" JOBQ(").append(requireQualifiedObjectName(rJobQueue, "jobQueue")).append(")");
         }
 
-        String rUserProfile = runContext.render(this.userProfile).as(String.class).orElse(null);
+        var rUserProfile = runContext.render(this.userProfile).as(String.class).orElse(null);
         if (rUserProfile != null) {
-            sbmCmd.append(" USER(").append(rUserProfile).append(")");
+            sbmCmd.append(" USER(").append(requireSimpleObjectName(rUserProfile, "userProfile")).append(")");
         }
 
-        String command = sbmCmd.toString();
+        var command = sbmCmd.toString();
         logger.info("Submitting job: {}", command);
 
         AS400 system = this.connect(runContext);
@@ -145,7 +143,7 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
             var resJobUser = submittedJob != null ? submittedJob.user() : rUserProfile;
 
             if (!success) {
-                String errorDetail = messages.stream()
+                var errorDetail = messages.stream()
                     .map(m -> m.getId() + ": " + m.getText())
                     .collect(Collectors.joining("; "));
                 logger.error("SBMJOB failed: {}", errorDetail);
@@ -195,6 +193,14 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
         }
 
         return null;
+    }
+
+    private String formatParameters(List<String> rParams) {
+        var parameterJoiner = new StringJoiner(" ");
+        for (var parameter : rParams) {
+            parameterJoiner.add("'" + escapeClStringLiteral(parameter) + "'");
+        }
+        return parameterJoiner.toString();
     }
 
     private record SubmittedJob(String number, String user, String name) {

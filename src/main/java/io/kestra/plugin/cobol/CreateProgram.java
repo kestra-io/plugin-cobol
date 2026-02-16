@@ -15,11 +15,11 @@ import org.slf4j.Logger;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @SuperBuilder
@@ -82,6 +82,7 @@ import java.util.stream.Collectors;
     }
 )
 public class CreateProgram extends AbstractAs400Connection implements RunnableTask<CreateProgram.Output> {
+    private static final Pattern COMPILE_OPTIONS_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*\\([^()]*\\)(\\s+[A-Za-z][A-Za-z0-9_]*\\([^()]*\\))*$");
 
     @Schema(
         title = "IBM i library.",
@@ -121,10 +122,10 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
-        String rLibrary = runContext.render(this.library).as(String.class).orElseThrow();
-        String rProgram = runContext.render(this.program).as(String.class).orElseThrow();
-        String rInline = runContext.render(this.sourceInline).as(String.class).orElse(null);
-        String rUri = runContext.render(this.sourceUri).as(String.class).orElse(null);
+        var rLibrary = requireSimpleObjectName(runContext.render(this.library).as(String.class).orElseThrow(), "library");
+        var rProgram = requireSimpleObjectName(runContext.render(this.program).as(String.class).orElseThrow(), "program");
+        var rInline = runContext.render(this.sourceInline).as(String.class).orElse(null);
+        var rUri = runContext.render(this.sourceUri).as(String.class).orElse(null);
 
         // Validate exactly one source is provided
         if (rInline == null && rUri == null) {
@@ -135,53 +136,48 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
         }
 
         // Resolve source content
-        String sourceContent;
-        if (rInline != null) {
-            sourceContent = rInline;
-        } else {
-            sourceContent = readSourceFromUri(runContext, rUri);
-        }
+        var sourceContent = rInline != null ? rInline : readSourceFromUri(runContext, rUri);
 
-        String programPath = "/QSYS.LIB/" + rLibrary + ".LIB/" + rProgram + ".PGM";
+        var programPath = "/QSYS.LIB/" + rLibrary + ".LIB/" + rProgram + ".PGM";
         logger.info("Creating program: {}", programPath);
 
-        AS400 system = this.connect(runContext);
+        var system = this.connect(runContext);
         try {
             // Upload source to IFS temporary file
-            String ifsPath = "/tmp/kestra_" + rProgram + "_" + UUID.randomUUID() + ".cbl";
+            var ifsPath = "/tmp/kestra_" + rProgram + "_" + UUID.randomUUID() + ".cbl";
             uploadSourceToIfs(system, ifsPath, sourceContent);
             logger.debug("Source uploaded to IFS: {}", ifsPath);
 
             // Build CRTCBLPGM command
-            StringBuilder crtCmd = new StringBuilder();
+            var crtCmd = new StringBuilder();
             crtCmd.append("CRTCBLPGM PGM(")
                 .append(rLibrary).append("/").append(rProgram)
                 .append(") SRCSTMF('").append(ifsPath).append("')");
 
-            String rOptions = runContext.render(this.compileOptions).as(String.class).orElse(null);
+            var rOptions = sanitizeCompileOptions(runContext.render(this.compileOptions).as(String.class).orElse(null));
             if (rOptions != null && !rOptions.isBlank()) {
                 crtCmd.append(" ").append(rOptions);
             }
 
-            String command = crtCmd.toString();
+            var command = crtCmd.toString();
             logger.info("Compiling: {}", command);
 
-            CommandCall cmd = new CommandCall(system);
-            boolean success = cmd.run(command);
+            var cmd = new CommandCall(system);
+            var success = cmd.run(command);
 
             // Extract compile messages
-            List<MessageOutput> messages = extractMessages(cmd.getMessageList());
+            var messages = extractMessages(cmd.getMessageList());
 
             // Clean up IFS temp file (best-effort)
             try {
-                IFSFile tempFile = new IFSFile(system, ifsPath);
+                var tempFile = new IFSFile(system, ifsPath);
                 tempFile.delete();
             } catch (Exception e) {
                 logger.warn("Could not remove temporary IFS file {}: {}", ifsPath, e.getMessage());
             }
 
             if (!success) {
-                String errorDetail = messages.stream()
+                var errorDetail = messages.stream()
                     .map(m -> m.getId() + ": " + m.getText())
                     .collect(Collectors.joining("; "));
                 logger.error("CRTCBLPGM failed: {}", errorDetail);
@@ -208,11 +204,28 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
     }
 
     private void uploadSourceToIfs(AS400 system, String ifsPath, String content) throws Exception {
-        IFSFile ifsFile = new IFSFile(system, ifsPath);
-        try (OutputStream os = new IFSFileOutputStream(ifsFile)) {
+        var ifsFile = new IFSFile(system, ifsPath);
+        try (var os = new IFSFileOutputStream(ifsFile)) {
             os.write(content.getBytes(StandardCharsets.UTF_8));
             os.flush();
         }
+    }
+
+    private String sanitizeCompileOptions(String compileOptions) {
+        if (compileOptions == null) {
+            return null;
+        }
+
+        var normalized = compileOptions.trim();
+        if (normalized.isEmpty()) {
+            return null;
+        }
+
+        if (!COMPILE_OPTIONS_PATTERN.matcher(normalized).matches()) {
+            throw new IllegalArgumentException("Property 'compileOptions' must be a space-separated list of CL options in NAME(VALUE) format.");
+        }
+
+        return normalized;
     }
 
     @Builder
