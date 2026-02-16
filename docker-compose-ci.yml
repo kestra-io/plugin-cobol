@@ -1,0 +1,25 @@
+services:
+  mainframe-sim:
+    image: python:3.12-alpine
+    command: ["python", "/sim/mainframe-simulator.py"]
+    volumes:
+      - ./.github/mainframe-simulator.py:/sim/mainframe-simulator.py:ro
+    ports:
+      - "8470:8470"
+      - "8471:8471"
+      - "8472:8472"
+      - "8473:8473"
+      - "8474:8474"
+      - "8475:8475"
+      - "8476:8476"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import socket; ports=[8470,8471,8472,8473,8474,8475,8476]; [socket.create_connection(('127.0.0.1', port), 1).close() for port in ports]"
+        ]
+      interval: 3s
+      timeout: 2s
+      retries: 20

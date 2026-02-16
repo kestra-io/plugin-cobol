@@ -50,6 +50,13 @@
 ./gradlew check --parallel
 ```
 
+### Running local mainframe simulator integration tests
+```
+chmod +x .github/setup-unit.sh
+./.github/setup-unit.sh
+COBOL_INTEGRATION_TESTS=true ./gradlew test
+```
+
 ### Development
 
 `VSCode`:
