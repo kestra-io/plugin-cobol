@@ -2,12 +2,10 @@ package io.kestra.plugin.templates;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContextFactory;
+import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-
-import jakarta.inject.Inject;
 
 import java.util.Map;
 
@@ -25,13 +23,13 @@ class ExampleTest {
 
     @Test
     void run() throws Exception {
-        RunContext runContext = runContextFactory.of(Map.of("variable", "John Doe"));
+        var runContext = runContextFactory.of(Map.of("variable", "John Doe"));
 
-        Example task = Example.builder()
+        var task = Example.builder()
             .format(new Property<>("Hello {{ variable }}"))
             .build();
 
-        Example.Output runOutput = task.run(runContext);
+        var runOutput = task.run(runContext);
 
         assertThat(runOutput.getChild().getValue(), is(StringUtils.reverse("Hello John Doe")));
     }
