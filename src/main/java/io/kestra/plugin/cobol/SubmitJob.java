@@ -12,7 +12,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -94,15 +93,15 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
-        String renderedLibrary = runContext.render(this.library).as(String.class).orElseThrow();
-        String renderedProgram = runContext.render(this.program).as(String.class).orElseThrow();
-        List<String> renderedParams = runContext.render(this.parameters).asList(String.class);
+        String rLibrary = runContext.render(this.library).as(String.class).orElseThrow();
+        String rProgram = runContext.render(this.program).as(String.class).orElseThrow();
+        List<String> rParams = runContext.render(this.parameters).asList(String.class);
 
         // Build the CALL PGM command with PARM if needed
         StringBuilder callCmd = new StringBuilder();
-        callCmd.append("CALL PGM(").append(renderedLibrary).append("/").append(renderedProgram).append(")");
-        if (!renderedParams.isEmpty()) {
-            String parmList = renderedParams.stream()
+        callCmd.append("CALL PGM(").append(rLibrary).append("/").append(rProgram).append(")");
+        if (!rParams.isEmpty()) {
+            String parmList = rParams.stream()
                 .map(p -> "'" + p + "'")
                 .collect(Collectors.joining(" "));
             callCmd.append(" PARM(").append(parmList).append(")");
@@ -112,19 +111,19 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
         StringBuilder sbmCmd = new StringBuilder();
         sbmCmd.append("SBMJOB CMD(").append(callCmd).append(")");
 
-        String renderedJobName = runContext.render(this.jobName).as(String.class).orElse(null);
-        if (renderedJobName != null) {
-            sbmCmd.append(" JOB(").append(renderedJobName).append(")");
+        String rJobName = runContext.render(this.jobName).as(String.class).orElse(null);
+        if (rJobName != null) {
+            sbmCmd.append(" JOB(").append(rJobName).append(")");
         }
 
-        String renderedJobQueue = runContext.render(this.jobQueue).as(String.class).orElse(null);
-        if (renderedJobQueue != null) {
-            sbmCmd.append(" JOBQ(").append(renderedJobQueue).append(")");
+        String rJobQueue = runContext.render(this.jobQueue).as(String.class).orElse(null);
+        if (rJobQueue != null) {
+            sbmCmd.append(" JOBQ(").append(rJobQueue).append(")");
         }
 
-        String renderedUserProfile = runContext.render(this.userProfile).as(String.class).orElse(null);
-        if (renderedUserProfile != null) {
-            sbmCmd.append(" USER(").append(renderedUserProfile).append(")");
+        String rUserProfile = runContext.render(this.userProfile).as(String.class).orElse(null);
+        if (rUserProfile != null) {
+            sbmCmd.append(" USER(").append(rUserProfile).append(")");
         }
 
         String command = sbmCmd.toString();
@@ -149,13 +148,12 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
                     .map(m -> m.getId() + ": " + m.getText())
                     .collect(Collectors.joining("; "));
                 logger.error("SBMJOB failed: {}", errorDetail);
-                throw new Exception("SBMJOB failed: " + errorDetail);
+                throw new IllegalStateException("SBMJOB failed: " + errorDetail);
             }
 
             logger.info("Job submitted successfully: {}/{}/{}", resJobNumber, resJobUser, resJobName);
 
             return Output.builder()
-                .submitted(true)
                 .messages(messages)
                 .jobName(resJobName)
                 .jobNumber(resJobNumber)
@@ -166,28 +164,9 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
         }
     }
 
-    private List<MessageOutput> extractMessages(AS400Message[] messageList) {
-        if (messageList == null || messageList.length == 0) {
-            return Collections.emptyList();
-        }
-
-        List<MessageOutput> messages = new ArrayList<>(messageList.length);
-        for (AS400Message msg : messageList) {
-            messages.add(MessageOutput.builder()
-                .id(msg.getID())
-                .text(msg.getText())
-                .severity(msg.getSeverity())
-                .build());
-        }
-        return messages;
-    }
-
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "Whether the job was submitted successfully.")
-        private final Boolean submitted;
-
         @Schema(title = "Messages returned by the IBM i system.")
         private final List<MessageOutput> messages;
 
@@ -201,16 +180,4 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
         private final String jobUser;
     }
 
-    @Builder
-    @Getter
-    public static class MessageOutput {
-        @Schema(title = "IBM i message ID (e.g., CPC1221).")
-        private final String id;
-
-        @Schema(title = "Message text.")
-        private final String text;
-
-        @Schema(title = "Message severity level.")
-        private final Integer severity;
-    }
 }

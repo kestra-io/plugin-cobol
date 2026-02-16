@@ -13,7 +13,6 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -83,11 +82,11 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
-        String renderedLibrary = runContext.render(this.library).as(String.class).orElseThrow();
-        String renderedProgram = runContext.render(this.program).as(String.class).orElseThrow();
-        List<String> renderedParams = runContext.render(this.parameters).asList(String.class);
+        String rLibrary = runContext.render(this.library).as(String.class).orElseThrow();
+        String rProgram = runContext.render(this.program).as(String.class).orElseThrow();
+        List<String> rParams = runContext.render(this.parameters).asList(String.class);
 
-        String programPath = "/QSYS.LIB/" + renderedLibrary + ".LIB/" + renderedProgram + ".PGM";
+        String programPath = "/QSYS.LIB/" + rLibrary + ".LIB/" + rProgram + ".PGM";
         logger.info("Calling program: {}", programPath);
 
         AS400 system = this.connect(runContext);
@@ -95,14 +94,14 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
             ProgramCall pgm = new ProgramCall(system);
 
             // Build program parameters
-            ProgramParameter[] pgmParams = buildParameters(renderedParams, system);
+            ProgramParameter[] pgmParams = buildParameters(rParams, system);
             pgm.setProgram(programPath, pgmParams);
 
             // Set timeout if specified
-            Integer renderedTimeout = runContext.render(this.programTimeout).as(Integer.class).orElse(null);
-            if (renderedTimeout != null) {
-                pgm.setTimeOut(renderedTimeout);
-                logger.debug("Timeout set to {} seconds", renderedTimeout);
+            Integer rTimeout = runContext.render(this.programTimeout).as(Integer.class).orElse(null);
+            if (rTimeout != null) {
+                pgm.setTimeOut(rTimeout);
+                logger.debug("Timeout set to {} seconds", rTimeout);
             }
 
             // Execute
@@ -124,13 +123,12 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
                     .map(m -> m.getId() + ": " + m.getText())
                     .collect(Collectors.joining("; "));
                 logger.error("Program {} failed: {}", programPath, errorDetail);
-                throw new Exception("Program call failed: " + errorDetail);
+                throw new IllegalStateException("Program call failed: " + errorDetail);
             }
 
             logger.info("Program {} completed successfully in {}", programPath, duration);
 
             return Output.builder()
-                .returnCode(0)
                 .messages(messages)
                 .jobName(jobName)
                 .jobNumber(jobNumber)
@@ -156,28 +154,9 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
         return pgmParams;
     }
 
-    private List<MessageOutput> extractMessages(AS400Message[] messageList) {
-        if (messageList == null || messageList.length == 0) {
-            return Collections.emptyList();
-        }
-
-        List<MessageOutput> messages = new ArrayList<>(messageList.length);
-        for (AS400Message msg : messageList) {
-            messages.add(MessageOutput.builder()
-                .id(msg.getID())
-                .text(msg.getText())
-                .severity(msg.getSeverity())
-                .build());
-        }
-        return messages;
-    }
-
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "Return code of the program call (0 = success).")
-        private final Integer returnCode;
-
         @Schema(title = "Messages returned by the IBM i system.")
         private final List<MessageOutput> messages;
 
@@ -194,16 +173,4 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
         private final Duration duration;
     }
 
-    @Builder
-    @Getter
-    public static class MessageOutput {
-        @Schema(title = "IBM i message ID (e.g., CPF9801).")
-        private final String id;
-
-        @Schema(title = "Message text.")
-        private final String text;
-
-        @Schema(title = "Message severity level.")
-        private final Integer severity;
-    }
 }

@@ -18,9 +18,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @SuperBuilder
@@ -36,13 +35,17 @@ import java.util.stream.Collectors;
 @Plugin(
     examples = {
         @Example(
-            title = "Compile a COBOL program from a remote source",
+            title = "Compile a COBOL program from a downloaded source",
             full = true,
             code = """
                 id: create_cobol
                 namespace: company.team
 
                 tasks:
+                  - id: download_source
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://repo.mybank.com/cobol/CALCINT.cbl
+
                   - id: compile
                     type: io.kestra.plugin.cobol.CreateProgram
                     host: "{{ secret('IBM_HOST') }}"
@@ -50,7 +53,7 @@ import java.util.stream.Collectors;
                     password: "{{ secret('IBM_PASSWORD') }}"
                     library: FINLIB
                     program: CALCINT
-                    sourceUri: https://repo.mybank.com/cobol/CALCINT.cbl
+                    sourceUri: "{{ outputs.download_source.uri }}"
                 """
         ),
         @Example(
@@ -102,7 +105,8 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
 
     @Schema(
         title = "URI to a COBOL source file.",
-        description = "A URI pointing to a COBOL source file (Kestra internal storage URI or HTTP URL). " +
+        description = "A Kestra internal storage URI pointing to a COBOL source file. " +
+            "Use a preceding download task for remote sources. " +
             "Either `sourceUri` or `sourceInline` must be provided, but not both."
     )
     private Property<String> sourceUri;
@@ -117,46 +121,46 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
 
-        String renderedLibrary = runContext.render(this.library).as(String.class).orElseThrow();
-        String renderedProgram = runContext.render(this.program).as(String.class).orElseThrow();
-        String renderedInline = runContext.render(this.sourceInline).as(String.class).orElse(null);
-        String renderedUri = runContext.render(this.sourceUri).as(String.class).orElse(null);
+        String rLibrary = runContext.render(this.library).as(String.class).orElseThrow();
+        String rProgram = runContext.render(this.program).as(String.class).orElseThrow();
+        String rInline = runContext.render(this.sourceInline).as(String.class).orElse(null);
+        String rUri = runContext.render(this.sourceUri).as(String.class).orElse(null);
 
         // Validate exactly one source is provided
-        if (renderedInline == null && renderedUri == null) {
+        if (rInline == null && rUri == null) {
             throw new IllegalArgumentException("Either 'sourceInline' or 'sourceUri' must be provided.");
         }
-        if (renderedInline != null && renderedUri != null) {
+        if (rInline != null && rUri != null) {
             throw new IllegalArgumentException("Only one of 'sourceInline' or 'sourceUri' may be provided, not both.");
         }
 
         // Resolve source content
         String sourceContent;
-        if (renderedInline != null) {
-            sourceContent = renderedInline;
+        if (rInline != null) {
+            sourceContent = rInline;
         } else {
-            sourceContent = readSourceFromUri(runContext, renderedUri);
+            sourceContent = readSourceFromUri(runContext, rUri);
         }
 
-        String programPath = "/QSYS.LIB/" + renderedLibrary + ".LIB/" + renderedProgram + ".PGM";
+        String programPath = "/QSYS.LIB/" + rLibrary + ".LIB/" + rProgram + ".PGM";
         logger.info("Creating program: {}", programPath);
 
         AS400 system = this.connect(runContext);
         try {
             // Upload source to IFS temporary file
-            String ifsPath = "/tmp/kestra_" + renderedProgram + ".cbl";
+            String ifsPath = "/tmp/kestra_" + rProgram + "_" + UUID.randomUUID() + ".cbl";
             uploadSourceToIfs(system, ifsPath, sourceContent);
             logger.debug("Source uploaded to IFS: {}", ifsPath);
 
             // Build CRTCBLPGM command
             StringBuilder crtCmd = new StringBuilder();
             crtCmd.append("CRTCBLPGM PGM(")
-                .append(renderedLibrary).append("/").append(renderedProgram)
+                .append(rLibrary).append("/").append(rProgram)
                 .append(") SRCSTMF('").append(ifsPath).append("')");
 
-            String renderedOptions = runContext.render(this.compileOptions).as(String.class).orElse(null);
-            if (renderedOptions != null && !renderedOptions.isBlank()) {
-                crtCmd.append(" ").append(renderedOptions);
+            String rOptions = runContext.render(this.compileOptions).as(String.class).orElse(null);
+            if (rOptions != null && !rOptions.isBlank()) {
+                crtCmd.append(" ").append(rOptions);
             }
 
             String command = crtCmd.toString();
@@ -181,13 +185,12 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
                     .map(m -> m.getId() + ": " + m.getText())
                     .collect(Collectors.joining("; "));
                 logger.error("CRTCBLPGM failed: {}", errorDetail);
-                throw new Exception("CRTCBLPGM failed: " + errorDetail);
+                throw new IllegalStateException("CRTCBLPGM failed: " + errorDetail);
             }
 
             logger.info("Program {} created successfully", programPath);
 
             return Output.builder()
-                .success(true)
                 .programPath(programPath)
                 .compileMessages(messages)
                 .build();
@@ -212,28 +215,9 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
         }
     }
 
-    private List<MessageOutput> extractMessages(AS400Message[] messageList) {
-        if (messageList == null || messageList.length == 0) {
-            return Collections.emptyList();
-        }
-
-        List<MessageOutput> messages = new ArrayList<>(messageList.length);
-        for (AS400Message msg : messageList) {
-            messages.add(MessageOutput.builder()
-                .id(msg.getID())
-                .text(msg.getText())
-                .severity(msg.getSeverity())
-                .build());
-        }
-        return messages;
-    }
-
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "Whether the compilation was successful.")
-        private final Boolean success;
-
         @Schema(title = "IFS path of the created program object.")
         private final String programPath;
 
@@ -241,16 +225,4 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
         private final List<MessageOutput> compileMessages;
     }
 
-    @Builder
-    @Getter
-    public static class MessageOutput {
-        @Schema(title = "IBM i message ID (e.g., LNC0011).")
-        private final String id;
-
-        @Schema(title = "Message text.")
-        private final String text;
-
-        @Schema(title = "Message severity level.")
-        private final Integer severity;
-    }
 }
