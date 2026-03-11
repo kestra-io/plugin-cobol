@@ -1,19 +1,22 @@
 package io.kestra.plugin.cobol;
 
-import com.ibm.as400.access.AS400;
-import com.ibm.as400.access.AS400Message;
-import com.ibm.as400.access.CommandCall;
-import com.ibm.as400.access.IFSFileOutputStream;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import jakarta.inject.Inject;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 
-import java.util.Map;
+import com.ibm.as400.access.AS400;
+import com.ibm.as400.access.AS400Message;
+import com.ibm.as400.access.CommandCall;
+import com.ibm.as400.access.IFSFileOutputStream;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -40,21 +43,23 @@ class CreateProgramTest {
     void runShouldCompileInlineSource() throws Exception {
         var runContext = runContextFactory.of(Map.of());
 
-        var task = spy(CreateProgram.builder()
-            .host(Property.ofValue("ibmi.example.com"))
-            .user(Property.ofValue("TESTUSER"))
-            .password(Property.ofValue("TESTPASS"))
-            .library(Property.ofValue("DEVLIB"))
-            .program(Property.ofValue("HELLO"))
-            .sourceInline(Property.ofValue("""
-                       IDENTIFICATION DIVISION.
-                       PROGRAM-ID. HELLO.
-                           PROCEDURE DIVISION.
-                               DISPLAY 'HELLO FROM KESTRA'.
-                               STOP RUN.
-                """))
-            .compileOptions(Property.ofValue("DBGVIEW(*ALL)"))
-            .build());
+        var task = spy(
+            CreateProgram.builder()
+                .host(Property.ofValue("ibmi.example.com"))
+                .user(Property.ofValue("TESTUSER"))
+                .password(Property.ofValue("TESTPASS"))
+                .library(Property.ofValue("DEVLIB"))
+                .program(Property.ofValue("HELLO"))
+                .sourceInline(Property.ofValue("""
+                           IDENTIFICATION DIVISION.
+                           PROGRAM-ID. HELLO.
+                               PROCEDURE DIVISION.
+                                   DISPLAY 'HELLO FROM KESTRA'.
+                                   STOP RUN.
+                    """))
+                .compileOptions(Property.ofValue("DBGVIEW(*ALL)"))
+                .build()
+        );
         var system = mock(AS400.class);
         doReturn(system).when(task).connect(any(RunContext.class));
 
@@ -65,9 +70,10 @@ class CreateProgramTest {
 
         try (
             MockedConstruction<IFSFileOutputStream> ignoredOutputStream = mockConstruction(IFSFileOutputStream.class);
-            MockedConstruction<CommandCall> mockedCommandCall = mockConstruction(CommandCall.class, (commandCall, context) -> {
+            MockedConstruction<CommandCall> mockedCommandCall = mockConstruction(CommandCall.class, (commandCall, context) ->
+            {
                 when(commandCall.run(anyString())).thenReturn(true);
-                when(commandCall.getMessageList()).thenReturn(new AS400Message[]{compileMessage});
+                when(commandCall.getMessageList()).thenReturn(new AS400Message[] { compileMessage });
             })
         ) {
             var output = task.run(runContext);
@@ -87,15 +93,17 @@ class CreateProgramTest {
     void runShouldRejectInvalidCompileOptions() throws Exception {
         var runContext = runContextFactory.of(Map.of());
 
-        var task = spy(CreateProgram.builder()
-            .host(Property.ofValue("ibmi.example.com"))
-            .user(Property.ofValue("TESTUSER"))
-            .password(Property.ofValue("TESTPASS"))
-            .library(Property.ofValue("FINLIB"))
-            .program(Property.ofValue("CALCINT"))
-            .sourceInline(Property.ofValue("IDENTIFICATION DIVISION."))
-            .compileOptions(Property.ofValue("DBGVIEW(*ALL) ; DLTLIB(MYLIB)"))
-            .build());
+        var task = spy(
+            CreateProgram.builder()
+                .host(Property.ofValue("ibmi.example.com"))
+                .user(Property.ofValue("TESTUSER"))
+                .password(Property.ofValue("TESTPASS"))
+                .library(Property.ofValue("FINLIB"))
+                .program(Property.ofValue("CALCINT"))
+                .sourceInline(Property.ofValue("IDENTIFICATION DIVISION."))
+                .compileOptions(Property.ofValue("DBGVIEW(*ALL) ; DLTLIB(MYLIB)"))
+                .build()
+        );
         var system = mock(AS400.class);
         doReturn(system).when(task).connect(any(RunContext.class));
 

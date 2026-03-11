@@ -1,19 +1,22 @@
 package io.kestra.plugin.cobol;
 
-import com.ibm.as400.access.AS400;
-import com.ibm.as400.access.AS400Message;
-import com.ibm.as400.access.CommandCall;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import jakarta.inject.Inject;
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 
-import java.util.List;
-import java.util.Map;
+import com.ibm.as400.access.AS400;
+import com.ibm.as400.access.AS400Message;
+import com.ibm.as400.access.CommandCall;
+
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
+
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -40,17 +43,19 @@ class SubmitJobTest {
     void runShouldParseSubmittedJobAndEscapeParameters() throws Exception {
         var runContext = runContextFactory.of(Map.of());
 
-        var task = spy(SubmitJob.builder()
-            .host(Property.ofValue("ibmi.example.com"))
-            .user(Property.ofValue("TESTUSER"))
-            .password(Property.ofValue("TESTPASS"))
-            .library(Property.ofValue("BATCHLIB"))
-            .program(Property.ofValue("EODPROC"))
-            .parameters(Property.ofValue(List.of("O'BRIEN", "2026-01-31")))
-            .jobName(Property.ofValue("EODJOB"))
-            .jobQueue(Property.ofValue("QBATCH"))
-            .userProfile(Property.ofValue("BATCHUSER"))
-            .build());
+        var task = spy(
+            SubmitJob.builder()
+                .host(Property.ofValue("ibmi.example.com"))
+                .user(Property.ofValue("TESTUSER"))
+                .password(Property.ofValue("TESTPASS"))
+                .library(Property.ofValue("BATCHLIB"))
+                .program(Property.ofValue("EODPROC"))
+                .parameters(Property.ofValue(List.of("O'BRIEN", "2026-01-31")))
+                .jobName(Property.ofValue("EODJOB"))
+                .jobQueue(Property.ofValue("QBATCH"))
+                .userProfile(Property.ofValue("BATCHUSER"))
+                .build()
+        );
         var system = mock(AS400.class);
         doReturn(system).when(task).connect(any(RunContext.class));
 
@@ -59,9 +64,10 @@ class SubmitJobTest {
         when(submitMessage.getText()).thenReturn("Job 123456/BATCHUSER/EODJOB submitted to job queue QBATCH in library QGPL.");
         when(submitMessage.getSeverity()).thenReturn(0);
 
-        try (MockedConstruction<CommandCall> mockedCommandCall = mockConstruction(CommandCall.class, (commandCall, context) -> {
+        try (MockedConstruction<CommandCall> mockedCommandCall = mockConstruction(CommandCall.class, (commandCall, context) ->
+        {
             when(commandCall.run(anyString())).thenReturn(true);
-            when(commandCall.getMessageList()).thenReturn(new AS400Message[]{submitMessage});
+            when(commandCall.getMessageList()).thenReturn(new AS400Message[] { submitMessage });
         })) {
             var output = task.run(runContext);
 

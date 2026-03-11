@@ -1,19 +1,22 @@
 package io.kestra.plugin.cobol;
 
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
+
 import com.ibm.as400.access.AS400;
 import com.ibm.as400.access.AS400Message;
 import com.ibm.as400.access.Job;
 import com.ibm.as400.access.ProgramCall;
 import com.ibm.as400.access.ProgramParameter;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedConstruction;
 
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -41,14 +44,16 @@ class CallJobTest {
     void runShouldReturnMessagesJobAndDuration() throws Exception {
         var runContext = runContextFactory.of(Map.of());
 
-        var task = spy(CallJob.builder()
-            .host(Property.ofValue("ibmi.example.com"))
-            .user(Property.ofValue("TESTUSER"))
-            .password(Property.ofValue("TESTPASS"))
-            .library(Property.ofValue("MYLIB"))
-            .program(Property.ofValue("MYPGM"))
-            .programTimeout(Property.ofValue(30))
-            .build());
+        var task = spy(
+            CallJob.builder()
+                .host(Property.ofValue("ibmi.example.com"))
+                .user(Property.ofValue("TESTUSER"))
+                .password(Property.ofValue("TESTPASS"))
+                .library(Property.ofValue("MYLIB"))
+                .program(Property.ofValue("MYPGM"))
+                .programTimeout(Property.ofValue(30))
+                .build()
+        );
         var system = mock(AS400.class);
         doReturn(system).when(task).connect(any(RunContext.class));
 
@@ -62,9 +67,10 @@ class CallJobTest {
         when(serverJob.getNumber()).thenReturn("123456");
         when(serverJob.getUser()).thenReturn("TESTUSER");
 
-        try (MockedConstruction<ProgramCall> mockedProgramCall = mockConstruction(ProgramCall.class, (programCall, context) -> {
+        try (MockedConstruction<ProgramCall> mockedProgramCall = mockConstruction(ProgramCall.class, (programCall, context) ->
+        {
             when(programCall.run()).thenReturn(true);
-            when(programCall.getMessageList()).thenReturn(new AS400Message[]{message});
+            when(programCall.getMessageList()).thenReturn(new AS400Message[] { message });
             when(programCall.getServerJob()).thenReturn(serverJob);
         })) {
             var output = task.run(runContext);
@@ -85,13 +91,15 @@ class CallJobTest {
     void runShouldFailWhenProgramCallReturnsFalse() throws Exception {
         var runContext = runContextFactory.of(Map.of());
 
-        var task = spy(CallJob.builder()
-            .host(Property.ofValue("ibmi.example.com"))
-            .user(Property.ofValue("TESTUSER"))
-            .password(Property.ofValue("TESTPASS"))
-            .library(Property.ofValue("MYLIB"))
-            .program(Property.ofValue("MYPGM"))
-            .build());
+        var task = spy(
+            CallJob.builder()
+                .host(Property.ofValue("ibmi.example.com"))
+                .user(Property.ofValue("TESTUSER"))
+                .password(Property.ofValue("TESTPASS"))
+                .library(Property.ofValue("MYLIB"))
+                .program(Property.ofValue("MYPGM"))
+                .build()
+        );
         var system = mock(AS400.class);
         doReturn(system).when(task).connect(any(RunContext.class));
 
@@ -100,9 +108,10 @@ class CallJobTest {
         when(message.getText()).thenReturn("Program failed");
         when(message.getSeverity()).thenReturn(40);
 
-        try (MockedConstruction<ProgramCall> ignored = mockConstruction(ProgramCall.class, (programCall, context) -> {
+        try (MockedConstruction<ProgramCall> ignored = mockConstruction(ProgramCall.class, (programCall, context) ->
+        {
             when(programCall.run()).thenReturn(false);
-            when(programCall.getMessageList()).thenReturn(new AS400Message[]{message});
+            when(programCall.getMessageList()).thenReturn(new AS400Message[] { message });
         })) {
             var exception = assertThrows(IllegalStateException.class, () -> task.run(runContext));
             assertThat(exception.getMessage(), is("Program call failed: CPF0001: Program failed"));

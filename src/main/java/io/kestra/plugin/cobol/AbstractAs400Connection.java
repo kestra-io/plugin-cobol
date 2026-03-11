@@ -1,16 +1,19 @@
 package io.kestra.plugin.cobol;
 
-import com.ibm.as400.access.AS400;
-import com.ibm.as400.access.AS400Message;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.RunContext;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import com.ibm.as400.access.AS400;
+import com.ibm.as400.access.AS400Message;
+
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -78,11 +81,13 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
 
         List<MessageOutput> messages = new ArrayList<>(messageList.length);
         for (AS400Message msg : messageList) {
-            messages.add(MessageOutput.builder()
-                .id(msg.getID())
-                .text(msg.getText())
-                .severity(msg.getSeverity())
-                .build());
+            messages.add(
+                MessageOutput.builder()
+                    .id(msg.getID())
+                    .text(msg.getText())
+                    .severity(msg.getSeverity())
+                    .build()
+            );
         }
         return messages;
     }
