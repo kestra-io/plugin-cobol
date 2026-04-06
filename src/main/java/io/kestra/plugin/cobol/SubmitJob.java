@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -61,6 +62,7 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
         description = "The library containing the program to submit (e.g., `BATCHLIB`)."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> library;
 
     @Schema(
@@ -68,6 +70,7 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
         description = "The name of the program to submit (e.g., `EODPROC`)."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> program;
 
     @Schema(
@@ -75,24 +78,28 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
         description = "List of string parameters to pass to the program via PARM()."
     )
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<List<String>> parameters = Property.ofValue(Collections.emptyList());
 
     @Schema(
         title = "Job name.",
         description = "Optional name for the submitted job. If not specified, the system assigns one."
     )
+    @PluginProperty(group = "advanced")
     private Property<String> jobName;
 
     @Schema(
         title = "Job queue.",
         description = "The job queue to submit the job to (e.g., `QBATCH`). If not specified, the default job queue is used."
     )
+    @PluginProperty(group = "advanced")
     private Property<String> jobQueue;
 
     @Schema(
         title = "User profile.",
         description = "The user profile under which the job runs. Defaults to the connection user."
     )
+    @PluginProperty(group = "advanced")
     private Property<String> userProfile;
 
     @Override

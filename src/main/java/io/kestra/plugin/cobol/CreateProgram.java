@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -92,6 +93,7 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
         description = "The target library where the compiled program will be created (e.g., `FINLIB`)."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> library;
 
     @Schema(
@@ -99,12 +101,14 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
         description = "The name for the compiled program object (e.g., `CALCINT`)."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> program;
 
     @Schema(
         title = "Inline COBOL source code.",
         description = "The COBOL source code provided directly as a string. Either `sourceInline` or `sourceUri` must be provided, but not both."
     )
+    @PluginProperty(group = "advanced")
     private Property<String> sourceInline;
 
     @Schema(
@@ -113,12 +117,14 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
             "Use a preceding download task for remote sources. " +
             "Either `sourceUri` or `sourceInline` must be provided, but not both."
     )
+    @PluginProperty(group = "advanced")
     private Property<String> sourceUri;
 
     @Schema(
         title = "Additional compile options.",
         description = "Extra options to pass to CRTCBLPGM (e.g., `DBGVIEW(*ALL)`)."
     )
+    @PluginProperty(group = "advanced")
     private Property<String> compileOptions;
 
     @Override
