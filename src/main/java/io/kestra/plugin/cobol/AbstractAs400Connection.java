@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 /**
  * Base class for tasks that connect to an IBM i (AS/400) system.
@@ -38,6 +39,7 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
         description = "The hostname or IP address of the IBM i (AS/400) system."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> host;
 
     @Schema(
@@ -45,6 +47,7 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
         description = "The user profile to authenticate with on the IBM i system."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> user;
 
     @Schema(
@@ -52,6 +55,7 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
         description = "The password for the IBM i user profile."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> password;
 
     /**

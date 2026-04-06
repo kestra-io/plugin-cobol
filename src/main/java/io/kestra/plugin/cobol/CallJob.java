@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -59,6 +60,7 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
         description = "The library containing the program to call (e.g., `FINLIB`)."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> library;
 
     @Schema(
@@ -66,6 +68,7 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
         description = "The name of the program to call (e.g., `CALCINT`)."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> program;
 
     @Schema(
@@ -73,12 +76,14 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
         description = "List of string parameters to pass to the program. Each string is converted to EBCDIC using the system CCSID."
     )
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<List<String>> parameters = Property.ofValue(Collections.emptyList());
 
     @Schema(
         title = "Program call timeout in seconds.",
         description = "Maximum time in seconds to wait for the program to complete. If not set, no timeout is applied."
     )
+    @PluginProperty(group = "execution")
     private Property<Integer> programTimeout;
 
     @Override

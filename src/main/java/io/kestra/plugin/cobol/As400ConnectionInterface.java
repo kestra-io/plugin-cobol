@@ -17,7 +17,7 @@ public interface As400ConnectionInterface {
         description = "The hostname or IP address of the IBM i (AS/400) system."
     )
     @NotNull
-    @PluginProperty(group = "connection")
+    @PluginProperty(group = "main")
     Property<String> getHost();
 
     @Schema(
@@ -25,7 +25,7 @@ public interface As400ConnectionInterface {
         description = "The user profile to authenticate with on the IBM i system."
     )
     @NotNull
-    @PluginProperty(group = "connection")
+    @PluginProperty(group = "main")
     Property<String> getUser();
 
     @Schema(
@@ -33,6 +33,6 @@ public interface As400ConnectionInterface {
         description = "The password for the IBM i user profile."
     )
     @NotNull
-    @PluginProperty(group = "connection")
+    @PluginProperty(group = "main")
     Property<String> getPassword();
 }
