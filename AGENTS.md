@@ -7,8 +7,9 @@
 
 ## Why
 
-- This plugin integrates Kestra with IBM i / AS400 COBOL.
-- It provides tasks that run, submit and create IBM i COBOL programs and jobs.
+- What user problem does this solve? Teams need to run, submit and create IBM i COBOL programs and jobs from orchestrated workflows instead of relying on manual console work, ad hoc scripts, or disconnected schedulers.
+- Why would a team adopt this plugin in a workflow? It keeps IBM i / AS400 COBOL steps in the same Kestra flow as upstream preparation, approvals, retries, notifications, and downstream systems.
+- What operational/business outcome does it enable? It reduces manual handoffs and fragmented tooling while improving reliability, traceability, and delivery speed for processes that depend on IBM i / AS400 COBOL.
 
 ## How
 
