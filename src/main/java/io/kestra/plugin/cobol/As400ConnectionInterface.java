@@ -33,6 +33,6 @@ public interface As400ConnectionInterface {
         description = "The password for the IBM i user profile."
     )
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(secret = true, group = "main")
     Property<String> getPassword();
 }
