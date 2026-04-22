@@ -47,7 +47,7 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
         description = "The user profile to authenticate with on the IBM i system."
     )
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(secret = true, group = "main")
     private Property<String> user;
 
     @Schema(
@@ -55,7 +55,7 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
         description = "The password for the IBM i user profile."
     )
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(secret = true, group = "main")
     private Property<String> password;
 
     /**
