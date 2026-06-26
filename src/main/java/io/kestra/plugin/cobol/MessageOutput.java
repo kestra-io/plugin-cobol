@@ -12,15 +12,15 @@ import io.kestra.core.models.annotations.PluginProperty;
 @Builder
 @Getter
 public class MessageOutput {
-    @Schema(title = "IBM i message ID (e.g., CPF9801).")
+    @Schema(title = "IBM i message ID (e.g., CPF9801)")
     @PluginProperty(group = "advanced")
     private final String id;
 
-    @Schema(title = "Message text.")
+    @Schema(title = "Message text")
     @PluginProperty(group = "advanced")
     private final String text;
 
-    @Schema(title = "Message severity level.")
+    @Schema(title = "Message severity level")
     @PluginProperty(group = "advanced")
     private final Integer severity;
 }

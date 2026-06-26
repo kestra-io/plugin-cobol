@@ -32,7 +32,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create (compile) a COBOL program on IBM i.",
+    title = "Create (compile) a COBOL program on IBM i",
     description = "Uploads COBOL source to an IFS temporary file, then compiles using CRTCBLPGM via JTOpen CommandCall. " +
         "Source can be provided inline or via a URI to a COBOL source file."
 )
@@ -89,7 +89,7 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
     private static final Pattern COMPILE_OPTIONS_PATTERN = Pattern.compile("^[A-Za-z][A-Za-z0-9_]*\\([^()]*\\)(\\s+[A-Za-z][A-Za-z0-9_]*\\([^()]*\\))*$");
 
     @Schema(
-        title = "IBM i library.",
+        title = "IBM i library",
         description = "The target library where the compiled program will be created (e.g., `FINLIB`)."
     )
     @NotNull
@@ -97,7 +97,7 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
     private Property<String> library;
 
     @Schema(
-        title = "Program name.",
+        title = "Program name",
         description = "The name for the compiled program object (e.g., `CALCINT`)."
     )
     @NotNull
@@ -105,14 +105,14 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
     private Property<String> program;
 
     @Schema(
-        title = "Inline COBOL source code.",
+        title = "Inline COBOL source code",
         description = "The COBOL source code provided directly as a string. Either `sourceInline` or `sourceUri` must be provided, but not both."
     )
     @PluginProperty(group = "advanced")
     private Property<String> sourceInline;
 
     @Schema(
-        title = "URI to a COBOL source file.",
+        title = "URI to a COBOL source file",
         description = "A Kestra internal storage URI pointing to a COBOL source file. " +
             "Use a preceding download task for remote sources. " +
             "Either `sourceUri` or `sourceInline` must be provided, but not both."
@@ -121,7 +121,7 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
     private Property<String> sourceUri;
 
     @Schema(
-        title = "Additional compile options.",
+        title = "Additional compile options",
         description = "Extra options to pass to CRTCBLPGM (e.g., `DBGVIEW(*ALL)`)."
     )
     @PluginProperty(group = "advanced")
@@ -242,10 +242,10 @@ public class CreateProgram extends AbstractAs400Connection implements RunnableTa
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "IFS path of the created program object.")
+        @Schema(title = "IFS path of the created program object")
         private final String programPath;
 
-        @Schema(title = "Compile messages returned by the IBM i system.")
+        @Schema(title = "Compile messages returned by the IBM i system")
         private final List<MessageOutput> compileMessages;
     }
 
