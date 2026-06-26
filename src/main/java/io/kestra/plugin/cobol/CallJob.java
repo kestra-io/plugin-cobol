@@ -27,7 +27,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Call an IBM i COBOL program synchronously.",
+    title = "Call an IBM i COBOL program synchronously",
     description = "Executes an existing program on an IBM i (AS/400) system using JTOpen ProgramCall and waits for completion."
 )
 @Plugin(
@@ -56,7 +56,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 public class CallJob extends AbstractAs400Connection implements RunnableTask<CallJob.Output> {
 
     @Schema(
-        title = "IBM i library.",
+        title = "IBM i library",
         description = "The library containing the program to call (e.g., `FINLIB`)."
     )
     @NotNull
@@ -64,7 +64,7 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
     private Property<String> library;
 
     @Schema(
-        title = "Program name.",
+        title = "Program name",
         description = "The name of the program to call (e.g., `CALCINT`)."
     )
     @NotNull
@@ -72,7 +72,7 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
     private Property<String> program;
 
     @Schema(
-        title = "Program parameters.",
+        title = "Program parameters",
         description = "List of string parameters to pass to the program. Each string is converted to EBCDIC using the system CCSID."
     )
     @Builder.Default
@@ -80,7 +80,7 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
     private Property<List<String>> parameters = Property.ofValue(Collections.emptyList());
 
     @Schema(
-        title = "Program call timeout in seconds.",
+        title = "Program call timeout in seconds",
         description = "Maximum time in seconds to wait for the program to complete. If not set, no timeout is applied."
     )
     @PluginProperty(group = "execution")
@@ -165,19 +165,19 @@ public class CallJob extends AbstractAs400Connection implements RunnableTask<Cal
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "Messages returned by the IBM i system.")
+        @Schema(title = "Messages returned by the IBM i system")
         private final List<MessageOutput> messages;
 
-        @Schema(title = "Name of the server job that ran the program.")
+        @Schema(title = "Name of the server job that ran the program")
         private final String jobName;
 
-        @Schema(title = "Number of the server job.")
+        @Schema(title = "Number of the server job")
         private final String jobNumber;
 
-        @Schema(title = "User profile of the server job.")
+        @Schema(title = "User profile of the server job")
         private final String jobUser;
 
-        @Schema(title = "Wall-clock duration of the program call.")
+        @Schema(title = "Wall-clock duration of the program call")
         private final Duration duration;
     }
 
