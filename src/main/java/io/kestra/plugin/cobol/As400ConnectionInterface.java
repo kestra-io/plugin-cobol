@@ -25,7 +25,7 @@ public interface As400ConnectionInterface {
         description = "The user profile to authenticate with on the IBM i system."
     )
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(secret = true, group = "main")
     Property<String> getUser();
 
     @Schema(

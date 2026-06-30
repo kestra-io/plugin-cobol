@@ -48,6 +48,7 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
     )
     @NotNull
     @PluginProperty(secret = true, group = "main")
+    @ToString.Exclude
     private Property<String> user;
 
     @Schema(
@@ -56,6 +57,7 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
     )
     @NotNull
     @PluginProperty(secret = true, group = "main")
+    @ToString.Exclude
     private Property<String> password;
 
     /**
