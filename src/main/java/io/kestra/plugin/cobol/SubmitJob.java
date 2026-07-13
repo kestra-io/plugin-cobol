@@ -28,7 +28,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Submit an IBM i COBOL job asynchronously.",
+    title = "Submit an IBM i COBOL job asynchronously",
     description = "Submits a job to an IBM i (AS/400) system using JTOpen CommandCall with SBMJOB. " +
         "The job is submitted and control returns immediately without waiting for completion."
 )
@@ -58,7 +58,7 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
     private static final Pattern JOB_IDENTITY_PATTERN = Pattern.compile("\\b(\\d{6})/([A-Za-z0-9_$#@]+)/([A-Za-z0-9_$#@]+)\\b");
 
     @Schema(
-        title = "IBM i library.",
+        title = "IBM i library",
         description = "The library containing the program to submit (e.g., `BATCHLIB`)."
     )
     @NotNull
@@ -66,7 +66,7 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
     private Property<String> library;
 
     @Schema(
-        title = "Program name.",
+        title = "Program name",
         description = "The name of the program to submit (e.g., `EODPROC`)."
     )
     @NotNull
@@ -74,7 +74,7 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
     private Property<String> program;
 
     @Schema(
-        title = "Program parameters.",
+        title = "Program parameters",
         description = "List of string parameters to pass to the program via PARM()."
     )
     @Builder.Default
@@ -82,21 +82,21 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
     private Property<List<String>> parameters = Property.ofValue(Collections.emptyList());
 
     @Schema(
-        title = "Job name.",
+        title = "Job name",
         description = "Optional name for the submitted job. If not specified, the system assigns one."
     )
     @PluginProperty(group = "advanced")
     private Property<String> jobName;
 
     @Schema(
-        title = "Job queue.",
+        title = "Job queue",
         description = "The job queue to submit the job to (e.g., `QBATCH`). If not specified, the default job queue is used."
     )
     @PluginProperty(group = "advanced")
     private Property<String> jobQueue;
 
     @Schema(
-        title = "User profile.",
+        title = "User profile",
         description = "The user profile under which the job runs. Defaults to the connection user."
     )
     @PluginProperty(group = "advanced")
@@ -219,16 +219,16 @@ public class SubmitJob extends AbstractAs400Connection implements RunnableTask<S
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
-        @Schema(title = "Messages returned by the IBM i system.")
+        @Schema(title = "Messages returned by the IBM i system")
         private final List<MessageOutput> messages;
 
-        @Schema(title = "Name of the submitted job.")
+        @Schema(title = "Name of the submitted job")
         private final String jobName;
 
-        @Schema(title = "Number of the submitted job.")
+        @Schema(title = "Number of the submitted job")
         private final String jobNumber;
 
-        @Schema(title = "User profile of the submitted job.")
+        @Schema(title = "User profile of the submitted job")
         private final String jobUser;
     }
 

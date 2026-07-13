@@ -35,7 +35,7 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
     private static final Pattern QUALIFIED_OBJECT_NAME_PATTERN = Pattern.compile("^[A-Za-z0-9_$#@*]+(/[A-Za-z0-9_$#@*]+)?$");
 
     @Schema(
-        title = "IBM i hostname.",
+        title = "IBM i hostname",
         description = "The hostname or IP address of the IBM i (AS/400) system."
     )
     @NotNull
@@ -43,19 +43,21 @@ public abstract class AbstractAs400Connection extends Task implements As400Conne
     private Property<String> host;
 
     @Schema(
-        title = "IBM i user profile.",
+        title = "IBM i user profile",
         description = "The user profile to authenticate with on the IBM i system."
     )
     @NotNull
     @PluginProperty(secret = true, group = "main")
+    @ToString.Exclude
     private Property<String> user;
 
     @Schema(
-        title = "IBM i password.",
+        title = "IBM i password",
         description = "The password for the IBM i user profile."
     )
     @NotNull
     @PluginProperty(secret = true, group = "main")
+    @ToString.Exclude
     private Property<String> password;
 
     /**

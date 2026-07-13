@@ -13,7 +13,7 @@ import jakarta.validation.constraints.NotNull;
 public interface As400ConnectionInterface {
 
     @Schema(
-        title = "IBM i hostname.",
+        title = "IBM i hostname",
         description = "The hostname or IP address of the IBM i (AS/400) system."
     )
     @NotNull
@@ -21,15 +21,15 @@ public interface As400ConnectionInterface {
     Property<String> getHost();
 
     @Schema(
-        title = "IBM i user profile.",
+        title = "IBM i user profile",
         description = "The user profile to authenticate with on the IBM i system."
     )
     @NotNull
-    @PluginProperty(group = "main")
+    @PluginProperty(secret = true, group = "main")
     Property<String> getUser();
 
     @Schema(
-        title = "IBM i password.",
+        title = "IBM i password",
         description = "The password for the IBM i user profile."
     )
     @NotNull
