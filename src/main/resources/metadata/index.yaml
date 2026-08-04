@@ -2,7 +2,7 @@ group: io.kestra.plugin.cobol
 name: "cobol"
 title: "IBM i / AS400 COBOL"
 description: "Tasks that run, submit and create IBM i COBOL programs and jobs"
-body: ""
+body: "Call IBM i (AS/400) COBOL programs synchronously with `CallJob`, submit them as asynchronous batch jobs with `SubmitJob`, and compile COBOL source into program objects with `CreateProgram`, all over the JTOpen library and authenticated with a host, user profile, and password."
 videos: []
 createdBy: "Kestra Core Team"
 managedBy: "Kestra Core Team"
