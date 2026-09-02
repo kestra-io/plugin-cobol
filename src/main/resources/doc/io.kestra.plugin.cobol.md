@@ -4,7 +4,7 @@ Execute COBOL programs and submit jobs on IBM i (AS/400) systems from Kestra flo
 
 ## Authentication
 
-Set `host` (required), `user` (required), and `password` (required) on every task to connect to the IBM i system. Store secrets in [secrets](https://kestra.io/docs/concepts/secret) and apply connection properties globally with [plugin defaults](https://kestra.io/docs/workflow-components/plugin-defaults).
+Set `host` (required), `user` (required), and `password` (required) on every task to connect to the IBM i system. Store secrets in [secrets](https://kestra.io/docs/concepts/secret) and set connection properties on each task.
 
 ## Tasks
 
